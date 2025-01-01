@@ -1,62 +1,48 @@
-const express = require('express');
-const TelegramBot = require('node-telegram-bot-api');
-const { Configuration, OpenAIApi } = require('openai');
+require('dotenv').config();
+const { Telegraf } = require('telegraf');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)); // 兼容 ES Modules
 
-// 检查环境变量是否设置
-const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
+const deepseekApiKey = process.env.DEEPSEEK_API_KEY; // 从环境变量中获取 DeepSeek API Key
 
-if (!TELEGRAM_TOKEN || !DEEPSEEK_API_KEY) {
-  console.error("请设置 TELEGRAM_TOKEN 和 DEEPSEEK_API_KEY 环境变量");
-  process.exit(1);
+if (!bot.telegram || !deepseekApiKey) {
+    console.error('错误：未设置 TELEGRAM_TOKEN 或 DEEPSEEK_API_KEY 环境变量');
+    process.exit(1);
 }
 
-// 初始化 Telegram 机器人（使用 Webhook 模式）
-const bot = new TelegramBot(TELEGRAM_TOKEN, {
-  webHook: { url: process.env.VERCEL_URL + '/' + TELEGRAM_TOKEN },
-  cancelable: true, // 启用取消功能，避免弃用警告
+bot.start((ctx) => ctx.reply('欢迎使用 DeepSeek 机器人！'));
+
+bot.on('text', async (ctx) => {
+    const message = ctx.message.text;
+
+    try {
+        const response = await fetch('https://api.deepseek.com/v1/chat/completions', { // 请替换成Deepseek正确的API endpoint
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${deepseekApiKey}`
+            },
+            body: JSON.stringify({
+                model: "deepseek-chat", // 请替换成 Deepseek 正确的模型名称
+                messages: [{ role: "user", content: message }]
+            })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Deepseek API Error:", errorData);
+          return ctx.reply(`Deepseek API 请求失败: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const reply = data.choices[0].message.content; //根据Deepseek的API返回格式修改
+        ctx.reply(reply);
+    } catch (error) {
+        console.error('请求 Deepseek API 发生错误:', error);
+        ctx.reply('与 Deepseek API 通信时发生错误。');
+    }
 });
 
-// 设置 Webhook
-bot.setWebHook(process.env.VERCEL_URL + '/' + TELEGRAM_TOKEN);
-
-// 初始化 DeepSeek（使用 OpenAI 的 SDK）
-const configuration = new Configuration({
-  apiKey: DEEPSEEK_API_KEY,
-  basePath: "https://api.deepseek.com/v1", // 替换为 DeepSeek 的实际 API 端点
-});
-const openai = new OpenAIApi(configuration);
-
-// 初始化 Express
-const app = express();
-app.use(express.json());
-
-// 处理 Webhook 请求
-app.post('/' + TELEGRAM_TOKEN, async (req, res) => {
-  try {
-    const update = req.body;
-    const chatId = update.message.chat.id;
-    const userMessage = update.message.text;
-
-    // 调用 DeepSeek API
-    const response = await openai.createCompletion({
-      model: "text-davinci-003", // 替换为 DeepSeek 支持的模型
-      prompt: userMessage,
-      max_tokens: 150,
-      timeout: 10000, // 增加超时时间
-    });
-
-    // 将 DeepSeek 的回复发送给用户
-    bot.sendMessage(chatId, response.data.choices[0].text.trim());
-  } catch (error) {
-    console.error("DeepSeek 请求失败:", error);
-    bot.sendMessage(chatId, "抱歉，我暂时无法处理你的请求。");
-  }
-  res.sendStatus(200);
-});
-
-// 启动服务器
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log('App is listening on port ' + PORT);
-});
+bot.launch();
+console.log("Token and Deepseek API key is load");
+console.log("Telegram bot started");
