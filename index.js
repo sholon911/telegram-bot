@@ -59,8 +59,11 @@ app.post('/', async (req, res) => {
       // 打印 DeepSeek API 的响应
       console.log('DeepSeek API response:', deepseekResponse.data); // 调试日志
 
-      // 将 DeepSeek API 的回复发送给用户
+      // 提取 DeepSeek API 的回复内容
       const botReply = deepseekResponse.data.choices[0].message.content || 'No response from DeepSeek API.';
+      console.log('Bot reply:', botReply); // 调试日志
+
+      // 将 DeepSeek API 的回复发送给用户
       bot.sendMessage(chatId, botReply);
     } catch (error) {
       // 打印 DeepSeek API 的错误信息
