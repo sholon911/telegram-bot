@@ -1,29 +1,26 @@
 const express = require('express');
-const app = express();
 const TelegramBot = require('node-telegram-bot-api');
 const { Configuration, OpenAIApi } = require('openai');
 
-// 从环境变量中读取 Telegram Token 和 OpenAI API Key
+// 检查环境变量是否设置
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-// 检查环境变量是否设置
 if (!TELEGRAM_TOKEN || !OPENAI_API_KEY) {
   console.error("请设置 TELEGRAM_TOKEN 和 OPENAI_API_KEY 环境变量");
   process.exit(1);
 }
 
-// 初始化 Telegram 机器人（使用 Webhook 模式）
+// 初始化 Telegram 机器人
 const bot = new TelegramBot(TELEGRAM_TOKEN, { webHook: { url: process.env.VERCEL_URL + '/' + TELEGRAM_TOKEN } });
-
-// 设置 Webhook
 bot.setWebHook(process.env.VERCEL_URL + '/' + TELEGRAM_TOKEN);
 
 // 初始化 OpenAI
 const configuration = new Configuration({ apiKey: OPENAI_API_KEY });
 const openai = new OpenAIApi(configuration);
 
-// 解析 JSON 请求体
+// 初始化 Express
+const app = express();
 app.use(express.json());
 
 // 处理 Webhook 请求
