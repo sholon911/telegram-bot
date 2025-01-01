@@ -36,6 +36,7 @@ app.post('/', async (req, res) => {
 
     try {
       // 调用 DeepSeek API
+      console.log('Sending message to DeepSeek API:', userMessage); // 调试日志
       const deepseekResponse = await axios.post(
         'https://api.deepseek.com/v1/chat', // DeepSeek API 的 URL
         {
@@ -49,11 +50,15 @@ app.post('/', async (req, res) => {
         }
       );
 
+      // 打印 DeepSeek API 的响应
+      console.log('DeepSeek API response:', deepseekResponse.data); // 调试日志
+
       // 将 DeepSeek API 的回复发送给用户
       const botReply = deepseekResponse.data.answer || 'No response from DeepSeek API.';
       bot.sendMessage(chatId, botReply);
     } catch (error) {
-      console.error('Error calling DeepSeek API:', error.response ? error.response.data : error.message);
+      // 打印 DeepSeek API 的错误信息
+      console.error('Error calling DeepSeek API:', error.response ? error.response.data : error.message); // 调试日志
       bot.sendMessage(chatId, 'Sorry, there was an error processing your message.');
     }
   }
