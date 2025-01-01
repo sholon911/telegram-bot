@@ -38,13 +38,13 @@ app.post('/', async (req, res) => {
       // 调用 DeepSeek API
       console.log('Sending message to DeepSeek API:', userMessage); // 调试日志
       const deepseekResponse = await axios.post(
-        'https://api.deepseek.com/chat', // 根据文档更新 URL
+        'https://api.deepseek.com/v1/chat/completions', // DeepSeek API 的 URL
         {
-          model: "deepseek-chat", // 根据文档添加 model
+          model: "deepseek-chat", // 模型名称
           messages: [
             {
-              role: "user", // 根据文档添加 role
-              content: userMessage
+              role: "user", // 用户角色
+              content: userMessage // 用户消息
             }
           ]
         },
