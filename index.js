@@ -1,4 +1,7 @@
 const express = require('express');
+console.log("TELEGRAM_TOKEN:", process.env.TELEGRAM_TOKEN);
+console.log("OPENAI_API_KEY:", process.env.OPENAI_API_KEY);
+console.log("VERCEL_URL:", process.env.VERCEL_URL);
 const TelegramBot = require('node-telegram-bot-api');
 const { Configuration, OpenAIApi } = require('openai');
 
